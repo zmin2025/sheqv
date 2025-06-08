@@ -1,24 +1,602 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <link rel="stylesheet" href="/assets/uni.1ab751af.css">
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>社区发现</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
 
-    <meta charset="UTF-8" />
-    <script>
-      var coverSupport = 'CSS' in window && typeof CSS.supports === 'function' && (CSS.supports('top: env(a)') ||
-        CSS.supports('top: constant(a)'))
-      document.write(
-        '<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0' +
-        (coverSupport ? ', viewport-fit=cover' : '') + '" />')
-    </script>
-    <title>sheqv</title>
-    <!--preload-links-->
-    <!--app-context-->
-    <script type="module" crossorigin src="/assets/index-6bfb636a.js"></script>
-    <link rel="stylesheet" href="/assets/index-f8a6efe7.css">
-  </head>
-  <body>
-    <div id="app"><!--app-html--></div>
+        
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+        
+        .waterfall {
+          display: flex;
+            gap: 16px;
+             
+        }
+
+        .column {
+            flex: 1; /* 等分宽度 */
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            }
+
+
+        .card {
+            width: 100%;
+            break-inside: avoid; /* 防止项目被断开显示在不同列 */
+            margin-bottom: 16px; /* 每个卡片底部留白 */
+            display: inline-block; /* 关键：让元素适应列宽 */
+            width: 100%; 
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+        
+        .media-container {
+            position: relative;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+            background: #f0f0f0;
+            overflow: hidden;
+        }
+        
+        .media-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .media-container:hover img {
+            transform: scale(1.05);
+        }
+        
+        .video-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .play-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        .play-btn i {
+            color: white;
+            font-size: 24px;
+        }
+        
+        .card-content {
+            padding: 15px;
+        }
+        
+        .card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .card p {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #3498db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .user-details {
+            flex: 1;
+        }
+        
+        .user-details .name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        
+        .user-details .time {
+            font-size: 0.8rem;
+            color: #95a5a6;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            color: #7f8c8d;
+            font-size: 0.85rem;
+        }
+        
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .loader {
+            text-align: center;
+            padding: 30px 0;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .loader i {
+            margin-right: 8px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .refresh-indicator {
+            text-align: center;
+            padding: 15px 0;
+            color: #7f8c8d;
+            position: sticky;
+            top: 70px;
+            z-index: 50;
+            background: #f5f7fa;
+            display: none;
+        }
+        
+        /* 响应式设计 */
+        
+        @media (max-width: 480px) {
+          .card  p {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3; /* 限制显示3行 */
+            overflow: hidden;
+            text-overflow: ellipsis; /* 超出部分显示省略号 */
+            }
+        
+        }
+    </style>
+</head>
+<body>
+
     
-  </body>
+    <div class="container">
+        <div class="waterfall" id="waterfall">
+            <div id="leftcolumn" class="column">
+            </div>
+            <div id="rightcolumn" class="column">
+            </div>
+        </div>
+        <div class="loader" id="loader">
+            <i class="fas fa-spinner fa-spin"></i> 正在加载更多内容...
+        </div>
+    </div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pulltorefreshjs/0.1.22/index.umd.js"></script>
+    <script>
+
+
+        // 模拟API数据
+        const mockData = {
+            // 默认数据
+            default: [
+                {
+                    id: 1,
+                    type: 'video',
+                    title: '阿兔长官 玩法思路',
+                    content: '',
+                    url:'https://bs-community.233leyuan.com/community/post/6e36e36995ce4fe99970677083483117_419286686.mp4',
+                    username: '游戏达人',
+                    time: '2小时前',
+                    likes: 245,
+                    comments: 32,
+                    shares: 18
+                },
+                {
+                    id: 2,
+                    type: 'video',
+                    title: '【翌日全系列】通关实况解说',
+                    content: '【翌日：日常侵蚀真实恐怖1】通关实况解说转自B站玩家：假面der柚子其余“翌日”系列通关攻略👇：【翌日：日常侵蚀真实恐怖2】通关实况解说【翌日：日常侵蚀真实恐怖3】通关实况解说【翌日：被封闭的未来】通关实况解说...',
+                    url:'https://bs-community.233leyuan.com/community/post/68d1191ed8f242eda7f198fda0c804ad_509637984.mp4',
+                    username: '达人',
+                    time: '5小时前',
+                    likes: 1200,
+                    comments: 186,
+                    shares: 340
+                },
+                {
+                    id: 3,
+                    type: 'image',
+                    title: '【S24蜜糖海迷踪】解锁新地点：棉花糖浮岛！',
+                    content: 'S24蜜糖海迷踪：剧情爆料📢蜜糖海突现神秘浮岛，抹茶游侠行踪揭秘？轰炸般的消息让枫糖酒馆陷入沸腾，皮蛋特此带来最新进展：为了搜寻更多的线索，两位伙伴承载着全蛋仔的希望，最终决定登上那座棉花糖浮岛。只是这棉花糖浮岛可不像看上去那样香香甜甜——不可违背的浮岛三大禁令背后隐藏着深意、以及...',
+                    url:'https://community.233leyuan.com/community/post/2a1ee8e49d8e4af9b4bd65807cfa9c6b_513416641.webp',
+                    username: '爱好者',
+                    time: '1天前',
+                    likes: 876,
+                    comments: 67,
+                    shares: 45
+                },
+                {
+                    id: 4,
+                    type: 'image',
+                    title: '奥特曼传奇英雄常见问题FAQ',
+                    content: '各位奥特小伙伴们，在战斗中会偶尔会出现一些问题，奥特君为大家准备了一些常见问题FAQ，当大家在游戏中遇到问题时，可以先参考对照这篇FAQ哦，如果问题还没有得到解决，可以具体详细地整理好想要反馈的问题，联系233的客服同学反馈哦，我们会第一时间关注并协助处理！（如何联系233乐园客服：233个人...',
+                    url:'https://community.233leyuan.com/community/post/6e1a101f98eb4967ac5059652bc6c791_485350490.jpg',
+                    username: '奥特曼',
+                    time: '3天前',
+                    likes: 543,
+                    comments: 89,
+                    shares: 123
+                },
+                {
+                    id: 5,
+                    type: 'video',
+                    title: '【樱校卡点】“粽叶裹吉祥，艾草寄安康”端午安康#子七来喽',
+                    content: '端午安康各位，浅更',
+                    url:'https://bs-community.233leyuan.com/community/post/f18fdacbd410496cbf7693f874eea303_514661086.mp4',
+                    username: '技术大牛',
+                    time: '4天前',
+                    likes: 2100,
+                    comments: 345,
+                    shares: 520
+                },
+                {
+                    id: 6,
+                    type: 'image',
+                    title: ' 鹅鸭杀（国际服）游戏进入说明',
+                    content: '这款海外/国际服 游戏需要使用加速器才能正常游玩运行，小伙伴们可以通过以下方法来玩到自己想玩的游戏：1.在233乐园内搜索【奇游加速器】或点击下方插卡安装加速器软件（加速器已通过安全监测，请放心安装）2.在奇游加速器搜鹅鸭杀，点击下载3.在加速栏找到自己想玩的游戏，点击加速，就能进入游玩啦~一图流...',
+                    url:'https://community.233leyuan.com/community/post/5af98aad38054d3eaef2248bbd2fb22f_428935667.jpg',
+                    username: '技术大牛',
+                    time: '5天前',
+                    likes: 2100,
+                    comments: 345,
+                    shares: 520
+                }
+            ],
+            
+            // type=1 的数据
+            type1: [
+                {
+                    id: 101,
+                    type: 'image',
+                    title: ' 微氪，有人一起玩吗',
+                    content: '',
+                    url: 'https://community.233leyuan.com/community/post/b75e37437c3c49708b31650807c3d47f_522048231.webp',
+                    username: '爱好者',
+                    time: '8小时前',
+                    likes: 320,
+                    comments: 45,
+                    shares: 28
+                },
+                {
+                    id: 102,
+                    type: 'image',
+                    title: '蛋仔派对领',
+                    content: '寻找宝宝计划年龄9~12岁   十好友送各种皮皮礼物  要听话要有素质  不要伪装宝宝蛋。（快手的优先送',
+                    url:'https://community.233leyuan.com/community/post/424457fab6ca47b98b62ee499740c8fb_511584766.webp',
+                    username: '用户123',
+                    time: '1天前',
+                    likes: 1560,
+                    comments: 210,
+                    shares: 430
+                },
+                {
+                    id: 103,
+                    type: 'video',
+                    title: ' 【蛋仔卡点】“我们永远.”',
+                    content: '地图名:当幸福降临#申请精华#申请周刊',
+                    url:"https://bs-community.233leyuan.com/community/post/8cb23b04774548c49bb6e486e0d9e98a_522055952.mp4",
+                    username: '咖啡师',
+                    time: '2天前',
+                    likes: 780,
+                    comments: 92,
+                    shares: 65
+                },
+                {
+                    id: 104,
+                    type: 'image',
+                    title: '【有奖话题】分享你最喜爱的甜品，赢惊喜奖励',
+                    content: '新赛季甜品甜品甜品upup，看的奶茶都疯狂了！过两天就要高考啦，奶茶在这里祝大家金榜题名，高考加油！在评论区分享你最喜欢的甜品即可示例：奶茶~当然喜欢奶茶啦，那你要问哪家的奶茶，我只能说——来者不拒同期活动：可获得新赛季盲盒十连抽（点击此处参与）2025年6月6日——2025年6月15日随机抽2位',
+                    url:'https://community.233leyuan.com/community/post/ebb0c7db5ff54a66ae0f78255c4fa0cf_520378322.webp',
+                    username: '奶茶',
+                    time: '2天前',
+                    likes: 420,
+                    comments: 76,
+                    shares: 54
+                }
+            ],
+            
+            // type=2 的数据
+            type2: [
+                {
+                    id: 201,
+                    type: 'image',
+                    title: ' 太爽了忍3太良心了',
+                    content: '欧皇附体爽了#233穿搭独家爆料 ',
+                    url:'https://community.233leyuan.com/community/post/0a418aa595b94017ac33a1ee55f2f9ba_505678435.webp',
+                    username: '城市骑手',
+                    time: '3小时前',
+                    likes: 890,
+                    comments: 120,
+                    shares: 210
+                },
+                {
+                    id: 202,
+                    type: 'video',
+                    title: '第一次做视频有可能不太好，大家不要笑话',
+                    content: '不知道录什么？所以录了一把排位赛，结果输了，大家不要笑我',
+                    url:'https://bs-community.233leyuan.com/community/post/7e473cf47af344d59c38ce00dcfd8ed6_521147981.mp4',
+                    username: '艺术创作',
+                    time: '1天前',
+                    likes: 670,
+                    comments: 85,
+                    shares: 97
+                },
+                {
+                    id: 203,
+                    type: 'image',
+                    title: '大保底又要来了，什么抽奖机制？',
+                    content: '',
+                    url:'https://community.233leyuan.com/community/post/7ef0e6146be74450b4370aefb514e63f_505024330.webp',
+                    username: '玩疯了',
+                    time: '1天前',
+                    likes: 1450,
+                    comments: 230,
+                    shares: 380
+                },
+                {
+                    id: 204,
+                    type: 'image ',
+                    title: '欧气爆棚了哈',
+                    content: '单抽出水鹤',
+                    url:'https://community.233leyuan.com/community/post/949d8d4941454ab7b9fad2d2744474c5_520623037.webp',
+                    username: '禁伸手党',
+                    time: '2天前',
+                    likes: 920,
+                    comments: 145,
+                    shares: 210
+                }
+            ]
+        };
+        
+
+
+        
+        // 获取URL参数
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const type = params.get('type');
+            
+            return type ;
+        }
+        
+        // 根据参数获取数据
+        function getDataByParams(params) {
+            if (params === '1') {
+                return mockData.type1;
+            } else if (params === '2') {
+                return mockData.type2;
+            } else {
+                return mockData.default;
+            }
+        }
+        
+
+        
+        // 生成用户头像
+        function generateAvatar(name) {
+            return name.charAt(0).toUpperCase();
+        }
+        
+        // 渲染卡片
+        function renderCard(item) {
+            const card = document.createElement('div');
+            card.className = 'card ';
+            
+            let mediaHtml = '';
+            if (item.type === 'video') {
+                mediaHtml = `
+                    <div class="media-container">
+                        <div class="video-container">
+                            <video controls>
+                                <source src="${item.url}" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                `;
+            } else {
+                mediaHtml = `
+                    <div class="media-container">
+                        <img src="`+item.url+`" alt="${item.title}">
+                    </div>
+                `;
+            }
+            
+            card.innerHTML = `
+                ${mediaHtml}
+                <div class="card-content">
+                    <h3>${item.title}</h3>
+                    <p>${item.content}</p>
+                    <div class="user-info">
+                        <div class="avatar">${generateAvatar(item.username)}</div>
+                        <div class="user-details">
+                            <div class="name">${item.username}</div>
+                            <div class="time">${item.time}</div>
+                        </div>
+                    </div>
+                    <div class="stats">
+                        <div class="stat">
+                            <i class="fas fa-heart"></i> ${item.likes}
+                        </div>
+                        <div class="stat">
+                            <i class="fas fa-comment"></i> ${item.comments}
+                        </div>
+                        <div class="stat">
+                            <i class="fas fa-share"></i> ${item.shares}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        // 渲染瀑布流
+        function renderWaterfall(data) {
+       
+            data.forEach((item, index) => {
+                const card = renderCard(item);
+                if (index % 2 === 0) {
+                    const column = document.getElementById('leftcolumn');
+                    column.appendChild(card);
+                } else {
+                    const column = document.getElementById('rightcolumn');
+                    column.appendChild(card);
+                }
+            });
+            
+        }
+
+        
+        // 上拉加载更多
+       function setupInfiniteScroll() {
+            const loader = document.getElementById('loader');
+            let isLoading = false;
+
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && !isLoading) {
+                    isLoading = true;
+                    loader.style.visibility = 'visible'; // 替换 display: block
+                    loader.style.opacity = '1';
+
+                    // 模拟API请求延迟
+                    setTimeout(() => {
+                        const params = getUrlParams();
+                        const moreData = getDataByParams(params);
+
+                        // 每次加载4条数据
+                        const newData = [];
+                        for (let i = 0; i < 4; i++) {
+                            const randomIndex = Math.floor(Math.random() * moreData.length);
+                            newData.push({ ...moreData[randomIndex], id: Date.now() + i });
+                        }
+
+                        renderWaterfall(newData);
+                        loader.style.visibility = 'hidden'; 
+                        loader.style.opacity = '0';
+                        isLoading = false;
+
+                        // 可选：重新 observe 以确保下一次检测生效
+                        observer.unobserve(loader);
+                        observer.observe(loader);
+                    }, 1500);
+                }
+            }, {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1
+            });
+
+            observer.observe(loader);
+        }
+
+        
+        // 初始化页面
+        function init() {
+            const params = getUrlParams();
+            const data = getDataByParams(params);
+            renderWaterfall(data);
+            setupInfiniteScroll();
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            init();
+            PullToRefresh.init({
+                mainElement: 'body',
+                onRefresh: function() {
+                    window.location.reload();
+                },
+                distThreshold: 60, // 触发刷新的最小距离(px)
+                distMax: 80, // 最大下拉距离(px)
+                instructionsPullToRefresh: '下拉刷新', // 下拉提示文本
+                instructionsReleaseToRefresh: '释放刷新', // 释放提示文本
+                instructionsRefreshing: '刷新中...', // 刷新中提示文本
+            });
+        });
+        // document.addEventListener('DOMContentLoaded', init);
+        // window.onload = function() {
+     
+
+        // }
+    </script>
+</body>
 </html>
